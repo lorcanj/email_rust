@@ -51,3 +51,37 @@ async fn subscribe_returns_200_valid_form() {
     // Assert
     assert_eq!(200, response.status().as_u16());
 }
+
+#[actix_rt::test]
+async fn subscribe_returns_400_missing_data() {
+    // Arrange
+    let app_address = spawn_app();
+    let client = reqwest::Client::new();
+    let test_cases = vec![
+        ("name=jim%20grey", "missing the email"),
+        ("email=jim%40gmail.com", "missing the name"),
+        ("", "missing both name and email")
+    ];
+
+    for (invalid_body, error_message) in test_cases {
+        // Act
+
+        let response = client
+            .post(&format!("{}/subscriptions", &app_address))
+            .header("Content-type", "application/x-www-form-urlencoded")
+            .body(invalid_body)
+            .send()
+            .await
+            .expect("Failed to execute request.");
+
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            // Additional customised error message on test failure
+            "The API did not fail with 400 Bad Request when the payload was {}.",
+            error_message
+        );
+    }
+}
+
+
