@@ -1,7 +1,7 @@
 //! src/main.rs;
 
-use std::net::TcpListener;
 use email_rust::run;
+use std::net::TcpListener;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
