@@ -1,6 +1,6 @@
 //! src/main.rs;
 
-use email_rust::run;
+use email_rust::startup::run;
 use std::net::TcpListener;
 
 #[actix_web::main]
