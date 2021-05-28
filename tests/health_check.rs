@@ -1,6 +1,8 @@
 //! tests/health_check.rs
 
 use std::net::TcpListener;
+use sqlx::{PgConnection, Connection};
+use email_rust::configuration::get_configuration;
 
 fn spawn_app() -> String {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
@@ -35,7 +37,14 @@ async fn health_check_works() {
 
 #[actix_rt::test]
 async fn subscribe_returns_200_valid_form() {
+
+    // Arrange
     let app_address = spawn_app();
+    let configuration = get_configuration().expect("Failed to read config");
+    let connection_string = configuration.database.connection_string();
+    let mut connection = PgConnection::connect(&connection_string)
+        .await
+        .expect("Failed to connect to Postgres.");
     let client = reqwest::Client::new();
     let body = "name=jim%20grey&email=jim%40gmail.com";
 
@@ -50,6 +59,13 @@ async fn subscribe_returns_200_valid_form() {
 
     // Assert
     assert_eq!(200, response.status().as_u16());
+
+    let saved = sqlx::query!("SELECT email, name FROM subscriptions", )
+        .fetch_one(&mut connection)
+        .await
+        .expect("Failed to fetch saved subscription.");
+    assert_eq!(saved.email, "jim@gmail.com");
+    assert_eq!(saved.name, "jim grey");
 }
 
 #[actix_rt::test]
